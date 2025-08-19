@@ -1,0 +1,140 @@
+{% extends "admin_base.html" %}
+{% block title %}Dashboard — Admin{% endblock %}
+{% block header %}Dashboard{% endblock %}
+
+{% block head %}
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="row g-3 mb-3">
+  <!-- KPIs -->
+  <div class="col-sm-6 col-xl-3">
+    <div class="card border-0 shadow-sm">
+      <div class="card-body">
+        <div class="text-secondary small">Total Products</div>
+        <div class="h4 mb-0 fw-bold">{{ stats.total }}</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-xl-3">
+    <div class="card border-0 shadow-sm">
+      <div class="card-body">
+        <div class="text-secondary small">Average Price</div>
+        <div class="h4 mb-0 fw-bold">${{ '%.2f'|format(stats.avg_price) }}</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-xl-3">
+    <div class="card border-0 shadow-sm">
+      <div class="card-body">
+        <div class="text-secondary small">Max Price</div>
+        <div class="h4 mb-0 fw-bold">${{ '%.2f'|format(stats.max_price) }}</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-xl-3">
+    <div class="card border-0 shadow-sm">
+      <div class="card-body">
+        <div class="text-secondary small">Categories</div>
+        <div class="h4 mb-0 fw-bold">{{ stats.categories }}</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3">
+  <!-- Line chart (fake page views) -->
+  <div class="col-lg-7">
+    <div class="card border-0 shadow-sm">
+      <div class="card-header bg-body-tertiary">Unique Visitors (fake)</div>
+      <div class="card-body">
+        <canvas id="lineChart" height="110"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bar chart (sales by category using counts) -->
+  <div class="col-lg-5">
+    <div class="card border-0 shadow-sm">
+      <div class="card-header bg-body-tertiary">Items by Category</div>
+      <div class="card-body">
+        <canvas id="barChart" height="110"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Recent products -->
+<div class="card border-0 shadow-sm mt-3">
+  <div class="card-header bg-body-tertiary">Recent Products</div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>#</th><th>Image</th><th>Name</th><th>Category</th><th class="text-end">Price</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in recent %}
+          <tr>
+            <td>{{ r.id }}</td>
+            <td><img src="{{ r.image }}" style="width:64px;height:48px;object-fit:cover;border-radius:.5rem"></td>
+            <td>{{ r.name }}</td>
+            <td><span class="badge bg-secondary-subtle text-dark">{{ r.category }}</span></td>
+            <td class="text-end">${{ '%.2f'|format(r.price) }}</td>
+          </tr>
+          {% else %}
+          <tr><td colspan="5" class="text-center text-secondary py-3">No data</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // Line chart (fake numbers)
+  const lineCtx = document.getElementById('lineChart');
+  new Chart(lineCtx, {
+    type: 'line',
+    data: {
+      labels: ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],
+      datasets: [{
+        label: 'Page Views',
+        data: [12, 28, 22, 40, 35, 90, 62],
+        fill: true,
+        tension: 0.35
+      },{
+        label: 'Sessions',
+        data: [8, 18, 25, 30, 28, 55, 45],
+        fill: true,
+        tension: 0.35
+      }]
+    },
+    options: {
+      plugins: { legend: { position: 'bottom' } },
+      scales: { y: { beginAtZero: true } }
+    }
+  });
+
+  // Bar chart (counts per category from server)
+  const barCtx = document.getElementById('barChart');
+  const catLabels = {{ cat_labels|tojson }};
+  const catCounts = {{ cat_counts|tojson }};
+  new Chart(barCtx, {
+    type: 'bar',
+    data: {
+      labels: catLabels,
+      datasets: [{ label: 'Items', data: catCounts }]
+    },
+    options: {
+      plugins: { legend: { display: false } },
+      scales: { y: { beginAtZero: true, precision:0 } }
+    }
+  });
+</script>
+{% endblock %}
